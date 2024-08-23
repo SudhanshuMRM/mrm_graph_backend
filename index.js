@@ -26,19 +26,17 @@ app.post('/api/getGraphData', (req, res) => {
     const body = req.body; // No need to await
     console.log("Received body:", body);
 
-    
-    const brokerUrl = 'amazing-logisticians.cloudmqtt.com'; // Public test broker
+
+    const brokerUrl = 'wss://amazing-logisticians.cloudmqtt.com:443'; // Public test broker
 
     // Replace with your MQTT client options
     const options = {
         clientId: 'qazwsx1234',
-        username: 'app_client', // if needed
-        password: 'uV7wNr5l110C', // if needed
-        protocol: 'mqtts', // Use 'mqtts' for SSL/TLS connection
-        port: 8883, // Port for SSL/TLS connection, 8883 is standard for secure MQTT
-        rejectUnauthorized: false, // If you have a self-signed certificate
-       // ca: fs.readFileSync('path/to/ca.crt'), // CA certificate for SSL/TLS
-      };
+        username: "app_client",
+        password: "uV7wNr5l110C",
+        protocol: "wss",
+        rejectUnauthorized: false,
+    };
 
     // Create an MQTT client
     const client = mqtt.connect(brokerUrl, options);
@@ -48,20 +46,51 @@ app.post('/api/getGraphData', (req, res) => {
         console.log('Connected to the MQTT broker');
 
         // Subscribe to a topic
-        client.subscribe('test/topic', (err) => {
-            if (!err) {
-                console.log('Subscribed to the topic');
+        client.subscribe('request/wan/DemoSystem', (err) => {
+            if (err) {
+                console.log('subscribe topic error:', err);
+            } else {
+
+                console.log('Subscribed to sending topic');
+
+                const message = JSON.stringify({
+                    client: 'qazwsx1234',
+                    transaction: 1,
+                    url: "http://192.168.4.1/api/v1.0/keys/attributes",
+                });
+
+                // Publish a message to a topic
+                client.publish('request/wan/DemoSystem', message);
             }
+
+
+
         });
 
-        // Publish a message to a topic
-        client.publish('test/topic', 'Hello MQTT');
+        client.subscribe('response/qazwsx1234', (err) => {
+            if (err) {
+                console.log('subscribe topic error:', err);
+            } else {
+
+                console.log('Subscribed to recieved topic');
+
+                client.on('message', (topic, message) => {
+                    console.log(`Received message: ${message.toString()}`);
+                    res.json({ message: JSON.parse(message.toString()) });
+                    
+                });
+            }
+
+
+
+        });
+         
+    
+
+
     });
 
-    // Handle incoming messages
-    client.on('message', (topic, message) => {
-        console.log(`Received message: ${message.toString()} from topic: ${topic}`);
-    });
+  
 
     // Handle errors
     client.on('error', (error) => {
@@ -73,7 +102,7 @@ app.post('/api/getGraphData', (req, res) => {
         console.log('Connection to broker closed');
     });
 
-    res.json({ message: body });
+   
 
 });
 
