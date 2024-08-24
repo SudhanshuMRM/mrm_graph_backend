@@ -1,13 +1,28 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const mqtt = require('mqtt');
+const cron = require('node-cron');
+const mqttConnect = require('./utils/helper')
+
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json()); // For parsing application/json
+
+//daily call the function to fetch data
+
+const dailyTask = () =>{console.log("daily task called")}
+
+// cron.schedule('0 0 * * *', () => {
+//     dailyTask();
+// });
+
+// cron.schedule('55 9 * * *', () => {
+//     dailyTask();
+// });
+
 
 // Routes
 app.get('/api/dummy', (req, res) => {
@@ -18,92 +33,19 @@ app.get('/api/dummy', (req, res) => {
 app.post('/api/dummy2', (req, res) => {
     const body = req.body; // No need to await
     console.log("Received body:", body);
+ 
+
     res.json({ message: body });
 
 });
 
-app.post('/api/getGraphData', (req, res) => {
+app.post('/api/getGraphData',async(req, res) => {
+    const url = "http://192.168.4.1/api/v1.0/keys/attributes"
     const body = req.body; // No need to await
-    console.log("Received body:", body);
-
-
-    const brokerUrl = 'wss://amazing-logisticians.cloudmqtt.com:443'; // Public test broker
-
-    // Replace with your MQTT client options
-    const options = {
-        clientId: 'qazwsx1234',
-        username: "app_client",
-        password: "uV7wNr5l110C",
-        protocol: "wss",
-        rejectUnauthorized: false,
-    };
-
-    // Create an MQTT client
-    const client = mqtt.connect(brokerUrl, options);
-
-    // Connect to the broker
-    client.on('connect', () => {
-        console.log('Connected to the MQTT broker');
-
-        // Subscribe to a topic
-        client.subscribe('request/wan/DemoSystem', (err) => {
-            if (err) {
-                console.log('subscribe topic error:', err);
-            } else {
-
-                console.log('Subscribed to sending topic');
-
-                const message = JSON.stringify({
-                    client: 'qazwsx1234',
-                    transaction: 1,
-                    url: "http://192.168.4.1/api/v1.0/keys/attributes",
-                });
-
-                // Publish a message to a topic
-                client.publish('request/wan/DemoSystem', message);
-            }
-
-
-
-        });
-
-        client.subscribe('response/qazwsx1234', (err) => {
-            if (err) {
-                console.log('subscribe topic error:', err);
-            } else {
-
-                console.log('Subscribed to recieved topic');
-
-                client.on('message', (topic, message) => {
-                    console.log(`Received message: ${message.toString()}`);
-                    res.json({ message: JSON.parse(message.toString()) });
-                    
-                });
-            }
-
-
-
-        });
-         
-    
-
-
-    });
-
-  
-
-    // Handle errors
-    client.on('error', (error) => {
-        console.error('Connection error:', error);
-    });
-
-    // Handle connection close
-    client.on('close', () => {
-        console.log('Connection to broker closed');
-    });
-
-   
-
+    // const deviceID = body.device_id;
+    // console.log("Device Id:", deviceID);
+    const resp = await  mqttConnect(body.device_id,url);
+    res.json({ message: resp });
 });
 
 
