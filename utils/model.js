@@ -6,5 +6,13 @@ const UserSchema = new mongoose.Schema({
     password:String
 })
 
+const TheatersSchema = new mongoose.Schema({
+    theaterId: Number,
+    location: Object,
+    
+});
 
-module.exports = mongoose.model("User",UserSchema)
+module.exports = {
+    User: mongoose.model('User', UserSchema),
+    Theaters: mongoose.model('Theaters', TheatersSchema),
+};
