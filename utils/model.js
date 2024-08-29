@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
-    name:String,
-    email:String,
-    password:String
+const EconTSchema = new mongoose.Schema({
+    DeviceName:String,
+    Data:Object,
 })
 
 const TheatersSchema = new mongoose.Schema({
@@ -13,6 +12,6 @@ const TheatersSchema = new mongoose.Schema({
 });
 
 module.exports = {
-    User: mongoose.model('User', UserSchema),
+    EconT: mongoose.model('EconT', EconTSchema),
     Theaters: mongoose.model('Theaters', TheatersSchema),
 };
