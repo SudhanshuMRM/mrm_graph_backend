@@ -33,6 +33,7 @@ const dailyTask = async () => {
     const DeviceName = "DemoSystem";
     let DeviceType = null;
     let url = 'http://192.168.4.1/api/v1.0/keys/attributes';
+
     // Collecting All Parameters from which data should collected.
     const resp = await mqttConnect(DeviceName, url)
     DeviceType = resp.data[0].fields[0].value;
@@ -50,6 +51,8 @@ const dailyTask = async () => {
         }
     })
 
+    console.log("parametersToFetch",parametersToFetch)
+
     for (const item of parametersToFetch) {
         try {
             const step = 200;
@@ -57,33 +60,61 @@ const dailyTask = async () => {
             const url = `http://192.168.4.1/api/v1.0/values/timeseries?key=${encodeURIComponent(item)}&limit=${step}&offset=${offset}`;
             const resp = await mqttConnect(DeviceName, url); // Assuming mqttConnect is properly handling connection and disconnection
 
+            console.log("resp",resp)
+
             if (resp.status == 200) {
-             
                 mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
                 if (mongoose.connection.readyState === 1) {
                     console.log('MongoDB Connected');
                     const Item = mongoose.model('EconT', EconTSchema);
-
                     const existingItem = await Item.findOne({ DeviceName: DeviceName });
+                    console.log("existingItem",existingItem);
+
                     if (existingItem) {
+                        
                         const PresentParamterList = Object.keys(existingItem.Data);
                         console.log("PresentParamterList", PresentParamterList);
 
-                        PresentParamterList.map((itema)=>{
-                            if(itema==item){
-                                console.log("itema",itema);
-                            }
-                        })
+                        const id = existingItem._id;
+                        let previousDataArray = Object.values(existingItem.Data)[0];
+                        let newDataArray = Object.values(resp.data[0])[0]
+                        let updatedDataArray = previousDataArray
+                        newDataArray.map((item)=>updatedDataArray.push(item))
 
-                        // if(Object.keys(existingItem.Data).includes(item)){
-                        //     console.log("Parameter Present");
-                        // }else{
-                        //     console.log("Parameter not present");
+                        console.log("id",id);
+                        console.log("previousDataArray",previousDataArray);
+                        console.log("newDataArray",newDataArray);
+                        console.log("updatedDataArray",updatedDataArray);
+
+
+                        // PresentParamterList.map((item4)=>{
+                        //     if(item4==Object.keys(resp.data[0])){
+                                
+                              
+
+
+                        //         // const updatedData = await Device.findOneAndUpdate(
+                        //         //     { _id: deviceId },  // Query to find the document
+                        //         //     { $set: updateData },  // Update operation
+                        //         //     { new: true, upsert: false }  // Options: return the updated document and do not create a new one if not found
+                        //         //   ).exec();
+
+                        //     }
+                        // })
+
+                        
+
+                        // for (const itema of PresentParamterList) {
+                        //     if (itema === item) {
+                        //         // const updateData = await Item.findOneAndUpdate({})   
+                        //         console.log("itema",itema)        
+
+                        //     }
                         // }
-
-
                     }
                     else {
+                        
+                        //saving new device in Database
                         const newItem = new Item({
                             DeviceName: DeviceName,
                             Data: {
