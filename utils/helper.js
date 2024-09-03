@@ -28,7 +28,7 @@ function mqttConnect(deviceID, url) {
           client.end(); // Disconnect the client on error
           reject(err);
         } else {
-          console.log('Subscribed to sending topic');
+          // console.log('Subscribed to sending topic');
 
           const message = JSON.stringify({
             client: clientRandomId,

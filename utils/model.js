@@ -5,13 +5,18 @@ const EconTSchema = new mongoose.Schema({
     Data:Object,
 })
 
-const TheatersSchema = new mongoose.Schema({
-    theaterId: Number,
-    location: Object,
-    
-});
+const DgcSchema = new mongoose.Schema({
+    DeviceName:String,
+    Data:Object,
+})
+
+const EconTManIndusSchema = new mongoose.Schema({
+    DeviceName:String,
+    Data:Object,
+})
 
 module.exports = {
     EconT: mongoose.model('EconT', EconTSchema),
-    Theaters: mongoose.model('Theaters', TheatersSchema),
+    DgcSchema: mongoose.model('Dgc', DgcSchema),
+    EconTManIndusSchema: mongoose.model('ManIndus', EconTManIndusSchema),
 };
