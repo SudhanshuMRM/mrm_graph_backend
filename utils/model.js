@@ -17,6 +17,6 @@ const EconTManIndusSchema = new mongoose.Schema({
 
 module.exports = {
     EconT: mongoose.model('EconT', EconTSchema),
-    DgcSchema: mongoose.model('Dgc', DgcSchema),
-    EconTManIndusSchema: mongoose.model('ManIndus', EconTManIndusSchema),
+    Dgc: mongoose.model('Dgc', DgcSchema),
+    EconTManIndus: mongoose.model('ManIndus', EconTManIndusSchema),
 };

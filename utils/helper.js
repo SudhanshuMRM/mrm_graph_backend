@@ -49,8 +49,16 @@ function mqttConnect(deviceID, url) {
           reject(err);
         } else {
           console.log('Subscribed to received topic');
+
+          const timeout = setTimeout(() => {
+            console.log('No message received within 10 seconds');
+            resolve("no"); // Resolve the promise with "no" if timeout occurs
+            client.end(); // Disconnect the client
+          }, 10000); // 10 seconds timeout
+
+
           client.on('message', (topic, message) => {
-            // console.log(`Received message: ${message.toString()}`);
+            clearTimeout(timeout);
             const resp = JSON.parse(message.toString());
             resolve(resp); // Resolve the promise with the response
             client.end(); // Disconnect the client after receiving the message
