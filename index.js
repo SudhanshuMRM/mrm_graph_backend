@@ -52,9 +52,15 @@ const dailyTask = async (AllDevices) => {
 
 
     const parametersToFetch = [];
-    // CYD6jGzpeS
-    const DeviceName = "0T1ghpvfe7";
+
+    // ECON-MAN-INDUS ==> 0T1ghpvfe7
+    // ECON-T-312E  ==> DemoSystem
+    // DGC-2024  ==>  Testsys012
+    
+    
+    const DeviceName = "Testsys011";
     let url = 'http://192.168.4.1/api/v1.0/keys/attributes';
+
 
     // Collecting All Parameters from which data should collected.
     const resp = await mqttConnect(DeviceName, url)
@@ -64,7 +70,6 @@ const dailyTask = async (AllDevices) => {
     } else {
         console.log("Device is active")
         const DeviceType = resp.data[0].fields[0].value;
-
 
         console.log("resp", resp);
         console.log("DeviceType:", DeviceType)
@@ -88,8 +93,10 @@ const dailyTask = async (AllDevices) => {
 
         if (parametersToFetch.length > 0) {
             for (let parameter of parametersToFetch) {
-                console.log("parameter selected:", parameter)
                 console.log("Device name: ", DeviceName)
+                console.log("DeviceType:", DeviceType)
+                console.log("parameter selected:", parameter)
+                
                 const step = 200;
                 let offset = 0;
 
@@ -117,7 +124,8 @@ const dailyTask = async (AllDevices) => {
                         }
                     }
                     else {
-                        console.log(Object.values(resp2.data));
+                        // console.log(Object.values(resp2.data));
+                        console.log("Something went wrong!!")
                     }
                 }
                 await fetchAllChunks();
