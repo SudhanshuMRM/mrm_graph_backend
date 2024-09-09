@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
 const mqttConnect = require('./utils/helper');
-const { EconTSchema, DgcSchema, EconTManIndusSchema, EconT } = require('./utils/model');
+const { EconTSchema, DgcSchema, EconTManIndusSchema } = require('./utils/model');
 
 const app = express();
 
@@ -12,23 +12,42 @@ app.use(cors());
 // app.use(express.json());
 
 // Daily task scheduled
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('0 10 * * *', async () => {
     await getAllDevice(); // Ensure async/await is used if getAllDevice is an async function
-    console.log('Task ran at midnight!');
+    console.log('Task ran at 10 am!');
 });
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
     const getAllDevice = await getDeviceResp.json();
-
     dailyTask(getAllDevice.data);
-    
+
+}
+getAllDevice();
+
+const getOffset = async (DeviceName, Parameter, DeviceType) => {
+    console.log("parameter", Parameter)
+    console.log("DeviceName", DeviceName)
+    console.log("DeviceType", DeviceType)
+    await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+    if (mongoose.connection.readyState === 1) {
+
+        if (DeviceType == 'ECON-T-312E') { singleschema = mongoose.model('EconT', EconTSchema); }
+        else if (DeviceType == 'DGC-2024') { singleschema = mongoose.model('Dgc', DgcSchema) }
+        else if (DeviceType == 'ECON-MAN-INDUS') { singleschema = mongoose.model('ManIndus', EconTManIndusSchema) }
+        else { console.log("No Schema Set"); }
+
+        const existingItem = await singleschema.findOne({ DeviceName: DeviceName });
+        const offsetKey = `Data.${Parameter}.offset`; // Dynamically construct the path
+        const offsetValue = existingItem?.get(offsetKey); // Use get() to access the nested property safely
+        console.log("offset get from database : ", offsetValue)
+        return offsetValue;
+    }
+
 }
 
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
-    // console.log("all devices data i got in function", AllDevices)
-
     const AllDevicesQR = [];
 
     for (let singleDevice of AllDevices) {
@@ -38,16 +57,16 @@ const dailyTask = async (AllDevices) => {
     }
     console.log("Total Devices : ", AllDevicesQR)
 
-
     const parametersToFetch = [];
 
     // ECON-MAN-INDUS ==> 0T1ghpvfe7
     // ECON-T-312E  ==> DemoSystem
     // DGC-2024  ==>  Testsys012
 
+    const DeviceName = "DemoSystem";
 
-    const DeviceName = "Testsys015";
     console.log("Device selected: ", DeviceName)
+
     let url = 'http://192.168.4.1/api/v1.0/keys/attributes';
 
 
@@ -83,7 +102,11 @@ const dailyTask = async (AllDevices) => {
                 console.log("parameter selected:", parameter)
 
                 const step = 200;
-                let offset = 0;
+                let offset = await getOffset(DeviceName, parameter, DeviceType);
+                if (!offset > 0 || offset == undefined) {
+
+                    offset = 0;
+                }
 
                 let fetchDataFromDevice;
                 let completedChunks = [];
@@ -216,7 +239,7 @@ app.get('/api/getGraphData', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching Graph Data:', error);
-        res.status(500).json({ message: 'Error fetching theaters' });
+        res.status(500).json({ message: 'Error fetching Graph Data' });
     }
 });
 
