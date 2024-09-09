@@ -3,39 +3,27 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
 const mqttConnect = require('./utils/helper');
-const { EconTSchema, DgcSchema, EconTManIndusSchema } = require('./utils/model');
+const { EconTSchema, DgcSchema, EconTManIndusSchema, EconT } = require('./utils/model');
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// app.use(express.json());
 
 // Daily task scheduled
-// cron.schedule('0 0 * * *', async () => {
-//    getAllDevice()
-// });
+cron.schedule('0 0 * * *', async () => {
+    await getAllDevice(); // Ensure async/await is used if getAllDevice is an async function
+    console.log('Task ran at midnight!');
+});
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
     const getAllDevice = await getDeviceResp.json();
 
-
-
-    // const addcheck = [];
-
-    // getAllDevice.data.map((item)=>{
-    //     console.log("item",item)
-    //     addcheck.push(item)
-    // })
-
-    // console.log("addcheck",addcheck)
-    // console.log("addcheck:", typeof (addcheck))
-
     dailyTask(getAllDevice.data);
+    
 }
-
-getAllDevice();
 
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
@@ -56,9 +44,10 @@ const dailyTask = async (AllDevices) => {
     // ECON-MAN-INDUS ==> 0T1ghpvfe7
     // ECON-T-312E  ==> DemoSystem
     // DGC-2024  ==>  Testsys012
-    
-    
-    const DeviceName = "Testsys011";
+
+
+    const DeviceName = "Testsys015";
+    console.log("Device selected: ", DeviceName)
     let url = 'http://192.168.4.1/api/v1.0/keys/attributes';
 
 
@@ -70,9 +59,7 @@ const dailyTask = async (AllDevices) => {
     } else {
         console.log("Device is active")
         const DeviceType = resp.data[0].fields[0].value;
-
-        console.log("resp", resp);
-        console.log("DeviceType:", DeviceType)
+        console.log("DeviceType is:", DeviceType)
 
         resp.data?.map((item) => {
             if (item.group == "Settings") {
@@ -89,14 +76,12 @@ const dailyTask = async (AllDevices) => {
             }
         })
 
-        console.log("Parameters to fetch : ", parametersToFetch)
+        console.log("Total Active Parameters: ", parametersToFetch)
 
         if (parametersToFetch.length > 0) {
             for (let parameter of parametersToFetch) {
-                console.log("Device name: ", DeviceName)
-                console.log("DeviceType:", DeviceType)
                 console.log("parameter selected:", parameter)
-                
+
                 const step = 200;
                 let offset = 0;
 
@@ -107,7 +92,7 @@ const dailyTask = async (AllDevices) => {
                     let url = `http://192.168.4.1/api/v1.0/values/timeseries?key=${encodeURIComponent(parameter)}&limit=${step}&offset=${offset}`;
 
                     const resp2 = await mqttConnect(DeviceName, url);
-                    console.log("resp2", resp2)
+
                     if (resp2.status == 200) {
                         fetchDataFromDevice = Object.values(resp2.data[0])[0];
 
@@ -115,12 +100,16 @@ const dailyTask = async (AllDevices) => {
 
                         if (fetchDataFromDevice.length == 200) {
                             offset = offset + 200;
-                            console.log("offset : ", offset)
+                            console.log("now offset is :  ", offset);
+                            console.log("now url is :  ", url);
 
                             await fetchAllChunks();
                         } else {
-                            console.log("all data fetched");
-                            console.log("completedChunks:", completedChunks)
+                            console.log("last URL: ", url);
+
+                            console.log("last offset: ", offset);
+                            console.log("last chunk: ", fetchDataFromDevice.length);
+                            console.log("completedChunks:", completedChunks);
                         }
                     }
                     else {
@@ -128,6 +117,7 @@ const dailyTask = async (AllDevices) => {
                         console.log("Something went wrong!!")
                     }
                 }
+
                 await fetchAllChunks();
 
                 await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
@@ -152,14 +142,14 @@ const dailyTask = async (AllDevices) => {
                         const existingId = existingItem._id;
                         const existingDeviceName = existingItem.DeviceName;
                         const existingParameters = Object.keys(existingItem.Data);
-                        console.log("existingId:", existingId);
-                        console.log("existingDeviceName:", existingDeviceName);
-                        console.log("existingParameters:", existingParameters);
-                        console.log("NewData:", completedChunks);
+                        // console.log("existingId:", existingId);
+                        // console.log("existingDeviceName:", existingDeviceName);
+                        // console.log("existingParameters:", existingParameters);
+                        // console.log("NewData:", completedChunks);
 
                         const result = await singleschema.findOneAndUpdate(
                             { DeviceName: DeviceName },
-                            { $set: { [`Data.${parameter}`]: completedChunks } },
+                            { $set: { [`Data.${parameter}`]: { totalData: completedChunks, offset: Number(offset) } } },
                             { new: true, upsert: true }
                         );
 
@@ -169,7 +159,7 @@ const dailyTask = async (AllDevices) => {
                         const newItem = new singleschema({
                             DeviceName: DeviceName,
                             Data: {
-                                [parameter]: completedChunks
+                                [parameter]: { totalData: completedChunks, offset: Number(offset) }
                             }
                         });
                         const savedItem = await newItem.save();
@@ -181,7 +171,7 @@ const dailyTask = async (AllDevices) => {
                 }
             }
         } else {
-            console.log("Recorded Parameters are 0")
+            console.log("Recorded Parameters are zero!!")
         }
 
 
@@ -194,15 +184,41 @@ const dailyTask = async (AllDevices) => {
 
 // Routes
 
-// app.get('/api/getTheaters', async (req, res) => {
-//     try {
-//         const theaters = await Theaters.find({}); // Fetch all theaters
-//         res.json(theaters);
-//     } catch (error) {
-//         console.error('Error fetching theaters:', error);
-//         res.status(500).json({ message: 'Error fetching theaters' });
-//     }
-// });
+app.get('/api/getGraphData', async (req, res) => {
+    try {
+        await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+
+        if (mongoose.connection.readyState === 1) {
+            const Econt = mongoose.model('EconT', EconTSchema); // Removed 'await' here
+            const ManIndus = mongoose.model('ManIndus', EconTManIndusSchema);
+            const DGC = mongoose.model('Dgc', DgcSchema);
+
+            try {
+
+                const EconData = await Econt.find({});
+                const ManIndusData = await ManIndus.find({});
+                const DgcData = await DGC.find({});
+
+                res.status(200).json([{
+                    EconData: EconData,
+                    ManIndusData: ManIndusData,
+                    DgcData: DgcData
+                }]);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                res.status(500).json({ message: "An error occurred while fetching data." });
+            }
+        }
+        else {
+            res.status(400).json({ message: "Database not connected!!" })
+        }
+
+
+    } catch (error) {
+        console.error('Error fetching Graph Data:', error);
+        res.status(500).json({ message: 'Error fetching theaters' });
+    }
+});
 
 // app.post('/api/postDevice', (req, res) => {
 //     try {
