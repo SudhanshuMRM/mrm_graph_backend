@@ -13,7 +13,7 @@ app.use(cors());
 
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
-cron.schedule('45 12 * * *', async () => {
+cron.schedule('30 13 * * *', async () => {
     await getAllDevice();
 });
 
