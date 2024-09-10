@@ -12,9 +12,9 @@ app.use(cors());
 // app.use(express.json());
 
 // Daily task scheduled
-cron.schedule('0 10 * * *', async () => {
+cron.schedule('30 11 * * *', async () => {
     await getAllDevice(); // Ensure async/await is used if getAllDevice is an async function
-    console.log('Task ran at 10 am!');
+    console.log('Task ran at 11:30 am!');
 });
 
 const getAllDevice = async () => {
@@ -23,7 +23,7 @@ const getAllDevice = async () => {
     dailyTask(getAllDevice.data);
 
 }
-getAllDevice();
+
 
 const getOffset = async (DeviceName, Parameter, DeviceType) => {
     console.log("parameter", Parameter)
@@ -104,7 +104,6 @@ const dailyTask = async (AllDevices) => {
                 const step = 200;
                 let offset = await getOffset(DeviceName, parameter, DeviceType);
                 if (!offset > 0 || offset == undefined) {
-
                     offset = 0;
                 }
 
@@ -162,23 +161,26 @@ const dailyTask = async (AllDevices) => {
                     const existingItem = await singleschema.findOne({ DeviceName: DeviceName });
                     if (existingItem) {
                         console.log("existingItem:", existingItem);
-                        const existingId = existingItem._id;
-                        const existingDeviceName = existingItem.DeviceName;
-                        const existingParameters = Object.keys(existingItem.Data);
-                        // console.log("existingId:", existingId);
+                        // const existingId = existingItem._id;
+                        // const existingDeviceName = existingItem.DeviceName;
+                        // const existingParameters = Object.keys(existingItem.Data);
+                        // const existingParameterData = Object.values(existingItem.Data);
+                        // console.log("existingParameterData:", existingParameterData);
                         // console.log("existingDeviceName:", existingDeviceName);
-                        // console.log("existingParameters:", existingParameters);
-                        // console.log("NewData:", completedChunks);
+
+                       
+                        const PreviousData = existingItem?.get(`Data.${parameter}.totalData`); // Use get() to access the nested property safely
+                        
+                        console.log("PreviousData:", PreviousData.length);
+                        console.log("NewData:", completedChunks.length);
 
                         const result = await singleschema.findOneAndUpdate(
                             { DeviceName: DeviceName },
                             { $set: { [`Data.${parameter}`]: { totalData: completedChunks, offset: Number(offset) } } },
                             { new: true, upsert: true }
                         );
-
                         console.log("Updated in database :", result);
                     } else {
-
                         const newItem = new singleschema({
                             DeviceName: DeviceName,
                             Data: {
@@ -188,7 +190,6 @@ const dailyTask = async (AllDevices) => {
                         const savedItem = await newItem.save();
                         console.log("New Item saved in database :", savedItem);
                     }
-
                 } else {
                     console.log("Database not connected!!")
                 }
@@ -242,16 +243,6 @@ app.get('/api/getGraphData', async (req, res) => {
         res.status(500).json({ message: 'Error fetching Graph Data' });
     }
 });
-
-// app.post('/api/postDevice', (req, res) => {
-//     try {
-//         const deviceName = req.body; // Capture the device name from the request body
-//         res.json({ message: deviceName });
-//     } catch (error) {
-//         console.error('Error posting device:', error);
-//         res.status(500).json({ message: 'Error posting device' });
-//     }
-// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
