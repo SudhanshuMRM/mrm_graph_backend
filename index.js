@@ -12,8 +12,8 @@ app.use(cors());
 // app.use(express.json());
 
 // Daily task scheduled
-// process.env.TZ = 'Asia/Kolkata';
-cron.schedule('10 17 * * *', async () => {
+process.env.TZ = 'Asia/Kolkata';
+cron.schedule('20 17 * * *', async () => {
     await getAllDevice();
 });
 
