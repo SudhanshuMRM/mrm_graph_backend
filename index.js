@@ -12,9 +12,9 @@ app.use(cors());
 // app.use(express.json());
 
 // Daily task scheduled
-cron.schedule('30 11 * * *', async () => {
-    await getAllDevice(); // Ensure async/await is used if getAllDevice is an async function
-    console.log('Task ran at 11:30 am!');
+process.env.TZ = 'Asia/Kolkata';
+cron.schedule('45 12 * * *', async () => {
+    await getAllDevice();
 });
 
 const getAllDevice = async () => {
@@ -23,6 +23,7 @@ const getAllDevice = async () => {
     dailyTask(getAllDevice.data);
 
 }
+
 
 
 const getOffset = async (DeviceName, Parameter, DeviceType) => {
@@ -169,10 +170,10 @@ const dailyTask = async (AllDevices) => {
                         // console.log("existingDeviceName:", existingDeviceName);
 
                        
-                        const PreviousData = existingItem?.get(`Data.${parameter}.totalData`); // Use get() to access the nested property safely
+                        // const PreviousData = existingItem?.get(`Data.${parameter}.totalData`); // Use get() to access the nested property safely
                         
-                        console.log("PreviousData:", PreviousData.length);
-                        console.log("NewData:", completedChunks.length);
+                        // console.log("PreviousData:", PreviousData.length);
+                        // console.log("NewData:", completedChunks.length);
 
                         const result = await singleschema.findOneAndUpdate(
                             { DeviceName: DeviceName },
