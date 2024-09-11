@@ -49,7 +49,6 @@ function mqttConnect(deviceID, url) {
           reject(err);
         } else {
           console.log('Subscribed to received topic');
-
           const timeout = setTimeout(() => {
             console.log('No message received within 10 seconds');
             resolve("no"); // Resolve the promise with "no" if timeout occurs

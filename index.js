@@ -13,7 +13,7 @@ app.use(cors());
 
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
-cron.schedule('13 12 * * *', async () => {
+cron.schedule('35 12 * * *', async () => {
     await getAllDevice();
 });
 
@@ -266,7 +266,7 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
     const deviceID = req.params.deviceID;
 
     if (!deviceID) {
-        res.status(400).send('Device ID is required');
+        res.status(400).send('Device ID is required!!');
     } else {
         try {
             await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
@@ -283,7 +283,8 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                             message: "Device found!",
                             status: 200,
                             DeviceType: "Econt",
-                            Data: EconData
+                            DataBaseId:EconData[0]._id,
+                            Data: EconData[0].Data
                         })
                     } else {
                         const ManIndusData = await ManIndus.find({ DeviceName: deviceID });
@@ -292,7 +293,8 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                                 message: "Device found!",
                                 status: 200,
                                 DeviceType: "ManIndus",
-                                Data: ManIndusData
+                                DataBaseId:ManIndusData[0]._id,
+                                Data: ManIndusData[0].Data
                             })
                         } else {
                             const DgcData = await DGC.find({ DeviceName: deviceID });
@@ -301,7 +303,8 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                                     message: "Device found!",
                                     status: 200,
                                     DeviceType: "Dgc",
-                                    Data: DgcData
+                                    DataBaseId:DgcData[0]._id,
+                                    Data: DgcData[0].Data
                                 })
                             } else {
                                 res.json({
