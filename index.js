@@ -13,7 +13,7 @@ app.use(cors());
 
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
-cron.schedule('00 12 * * *', async () => {
+cron.schedule('13 12 * * *', async () => {
     await getAllDevice();
 });
 
@@ -202,30 +202,30 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
         else { console.log("No Schema Set"); }
 
         const existingItem = await singleschema.findOne({ DeviceName: DeviceName });
-        console.log("existing in offset:",existingItem)
-        if(existingItem){
+        console.log("existing in offset:", existingItem)
+        if (existingItem) {
             const offsetKey = `Data.${Parameter}.offset`; // Dynamically construct the path
-            console.log("offsetKey:" ,offsetKey)
+            console.log("offsetKey:", offsetKey)
             const offsetValue = existingItem?.get(offsetKey); // Use get() to access the nested property safely
             console.log("offsetValue : ", offsetValue)
-            if(typeof offsetValue==Number){
+            if (typeof offsetValue == Number) {
                 console.log("i got the number")
                 return offsetValue;
-            }else{
-                console.log("type of offset",typeof offsetValue)
+            } else {
+                console.log("type of offset", typeof offsetValue)
                 return 0;
             }
-           
-        } else{
+
+        } else {
             return 0;
         }
-       
+
     }
 
 }
 
 // Routes
-app.get('/api/getGraphData', async (req, res) => {
+app.get('/api/getAllGraphData', async (req, res) => {
     try {
         await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
 
@@ -259,6 +259,77 @@ app.get('/api/getGraphData', async (req, res) => {
         console.error('Error fetching Graph Data:', error);
         res.status(500).json({ message: 'Error fetching Graph Data' });
     }
+});
+
+app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
+
+    const deviceID = req.params.deviceID;
+
+    if (!deviceID) {
+        res.status(400).send('Device ID is required');
+    } else {
+        try {
+            await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+
+            if (mongoose.connection.readyState === 1) {
+                const Econt = mongoose.model('EconT', EconTSchema);
+                const ManIndus = mongoose.model('ManIndus', EconTManIndusSchema);
+                const DGC = mongoose.model('Dgc', DgcSchema);
+
+                try {
+                    const EconData = await Econt.find({ DeviceName: deviceID });
+                    if (EconData.length != 0) {
+                        res.json({
+                            message: "Device found!",
+                            status: 200,
+                            DeviceType: "Econt",
+                            Data: EconData
+                        })
+                    } else {
+                        const ManIndusData = await ManIndus.find({ DeviceName: deviceID });
+                        if (ManIndusData.length != 0) {
+                            res.json({
+                                message: "Device found!",
+                                status: 200,
+                                DeviceType: "ManIndus",
+                                Data: ManIndusData
+                            })
+                        } else {
+                            const DgcData = await DGC.find({ DeviceName: deviceID });
+                            if (DgcData.length != 0) {
+                                res.json({
+                                    message: "Device found!",
+                                    status: 200,
+                                    DeviceType: "Dgc",
+                                    Data: DgcData
+                                })
+                            } else {
+                                res.json({
+                                    status: 200,
+                                    message: "No Device Found!!"
+                                })
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                    res.status(500).json({ message: "An error occurred while fetching data." });
+                }
+            }
+            else {
+                res.status(400).json({ message: "Database not connected!!" })
+            }
+
+
+        } catch (error) {
+            console.error('Error fetching Graph Data:', error);
+            res.status(500).json({ message: 'Error fetching Graph Data' });
+        }
+    }
+
+
+
+
 });
 
 // Error handling middleware
