@@ -14,7 +14,7 @@ app.use(cors());
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
 
-cron.schedule('55 15 * * *', async () => {
+cron.schedule('05 16 * * *', async () => {
     await getAllDevice();
 });
 
@@ -46,9 +46,7 @@ const dailyTask = async (AllDevices) => {
         // ECON-T-312E  ==> DemoSystem
         // DGC-2024  ==>  Testsys012
 
-        // const DeviceName = singleQR;
-
-        const DeviceName = "DemoSystem";
+        const DeviceName = singleQR;
 
         console.log("Device selected: ", DeviceName);
 
@@ -232,7 +230,7 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
 
 // Routes
 app.get('/', async (req, res) => {
-   res.status(200).json({message:"Welcome to MRM Graph Back-end!!"})
+    res.status(200).json({ message: "Welcome to MRM Graph Back-end!!" })
 });
 
 
@@ -294,7 +292,7 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                             message: "Device found!",
                             status: 200,
                             DeviceType: "Econt",
-                            DataBaseId:EconData[0]._id,
+                            DataBaseId: EconData[0]._id,
                             Data: EconData[0].Data
                         })
                     } else {
@@ -304,7 +302,7 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                                 message: "Device found!",
                                 status: 200,
                                 DeviceType: "ManIndus",
-                                DataBaseId:ManIndusData[0]._id,
+                                DataBaseId: ManIndusData[0]._id,
                                 Data: ManIndusData[0].Data
                             })
                         } else {
@@ -314,7 +312,7 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
                                     message: "Device found!",
                                     status: 200,
                                     DeviceType: "Dgc",
-                                    DataBaseId:DgcData[0]._id,
+                                    DataBaseId: DgcData[0]._id,
                                     Data: DgcData[0].Data
                                 })
                             } else {
