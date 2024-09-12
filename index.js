@@ -13,9 +13,10 @@ app.use(cors());
 
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
-cron.schedule('35 12 * * *', async () => {
+cron.schedule('15 10 * * *', async () => {
     await getAllDevice();
 });
+
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
@@ -23,6 +24,8 @@ const getAllDevice = async () => {
     dailyTask(getAllDevice.data);
 
 }
+
+getAllDevice();
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
     const AllDevicesQR = [];
@@ -208,7 +211,7 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
             console.log("offsetKey:", offsetKey)
             const offsetValue = existingItem?.get(offsetKey); // Use get() to access the nested property safely
             console.log("offsetValue : ", offsetValue)
-            if (typeof offsetValue == Number) {
+            if (typeof offsetValue == "number") {
                 console.log("i got the number")
                 return offsetValue;
             } else {
