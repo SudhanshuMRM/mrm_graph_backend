@@ -11,5 +11,11 @@
             "src": "/(.*)",
             "dest": "/index.js"
         }
+    ],
+    "crons": [
+        {
+            "path": "/getCronJob",
+            "schedule": "51 14 * * *"
+        }
     ]
 }
