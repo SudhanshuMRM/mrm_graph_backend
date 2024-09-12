@@ -13,7 +13,7 @@ app.use(cors());
 
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
-cron.schedule('15 10 * * *', async () => {
+cron.schedule('00 13 * * *', async () => {
     await getAllDevice();
 });
 
@@ -25,7 +25,7 @@ const getAllDevice = async () => {
 
 }
 
-getAllDevice();
+
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
     const AllDevicesQR = [];
@@ -45,7 +45,9 @@ const dailyTask = async (AllDevices) => {
         // ECON-T-312E  ==> DemoSystem
         // DGC-2024  ==>  Testsys012
 
-        const DeviceName = singleQR;
+        // const DeviceName = singleQR;
+
+        const DeviceName = "DemoSystem";
 
         console.log("Device selected: ", DeviceName);
 
@@ -228,6 +230,10 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
 }
 
 // Routes
+app.get('/', async (req, res) => {
+   res.status(200).json({message:"Welcome to MRM Graph Back-end!!"})
+});
+
 app.get('/api/getAllGraphData', async (req, res) => {
     try {
         await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
