@@ -14,10 +14,9 @@ app.use(cors());
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
 
-cron.schedule('05 16 * * *', async () => {
+cron.schedule('10 16 * * *', async () => {
     await getAllDevice();
 });
-
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
@@ -232,7 +231,6 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
 app.get('/', async (req, res) => {
     res.status(200).json({ message: "Welcome to MRM Graph Back-end!!" })
 });
-
 
 app.get('/api/getAllGraphData', async (req, res) => {
     try {
