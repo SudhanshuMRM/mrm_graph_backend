@@ -14,9 +14,11 @@ app.use(cors());
 // Daily task scheduled
 process.env.TZ = 'Asia/Kolkata';
 
-cron.schedule('10 16 * * *', async () => {
+cron.schedule('40 10 * * *', async () => {
     await getAllDevice();
 });
+
+
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
