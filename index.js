@@ -25,7 +25,7 @@ const getAllDevice = async () => {
 
 }
 
-getAllDevice();
+// getAllDevice();
 
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
@@ -46,6 +46,7 @@ const dailyTask = async (AllDevices) => {
         // ECON-T-312E  ==> DemoSystem
         // DGC-2024  ==>  Testsys012
 
+        // const DeviceName = "Testsys011";
         const DeviceName = singleQR;
 
         console.log("Device selected: ", DeviceName);
@@ -100,7 +101,7 @@ const dailyTask = async (AllDevices) => {
                         if (resp2.status == 200) {
                             fetchDataFromDevice = Object.values(resp2.data[0])[0];
 
-                            
+
 
                             if (fetchDataFromDevice.length == 200) {
                                 fetchDataFromDevice.map((item) => completedChunks.push(item));
@@ -148,7 +149,7 @@ const dailyTask = async (AllDevices) => {
                             // console.log("existingDeviceName:", existingDeviceName);
 
 
-                            const PreviousData = existingItem?.get(`Data.${parameter}.totalData`); // Use get() to access the nested property safely
+                            const PreviousData = existingItem?.get(`Data.${parameter}`); // Use get() to access the nested property safely
                             console.log("previous data", PreviousData)
                             const totalDatatoStore = [];
                             if (PreviousData != undefined) { PreviousData.map((item) => totalDatatoStore.push(item)); console.log("PreviousData length:", PreviousData.length); }
@@ -185,13 +186,6 @@ const dailyTask = async (AllDevices) => {
             }
         }
     }
-
-
-
-
-
-
-
 }
 
 const getOffset = async (DeviceName, Parameter, DeviceType) => {
@@ -208,22 +202,16 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
 
         const existingItem = await singleschema.findOne({ DeviceName: DeviceName });
         console.log("existing in offset:", existingItem)
-        if (existingItem) {
-            const offsetKey = `Data.${Parameter}.offset`; // Dynamically construct the path
-            console.log("offsetKey:", offsetKey)
-            const offsetValue = existingItem?.get(offsetKey); // Use get() to access the nested property safely
-            console.log("offsetValue : ", offsetValue)
-            if (typeof offsetValue == "number") {
-                console.log("i got the number")
-                return offsetValue;
-            } else {
-                console.log("type of offset", typeof offsetValue)
-                return 0;
-            }
 
+        // console.log("exitsting item for offset", existingItem.Data[Parameter].length)
+
+
+        if (existingItem && existingItem.Data[Parameter]) {
+            return existingItem.Data[Parameter].length;
         } else {
             return 0;
         }
+
 
     }
 
@@ -344,90 +332,101 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
 
 });
 
+app.get('/api/ResetGraph/:deviceID', async (req, res) => {
 
+    const deviceID = req.params.deviceID;
 
+    if (!deviceID) {
+        res.status(400).send('Device ID is required!!');
+    } else {
+        try {
+            await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
 
-// app.get('/api/ResetGraph/:deviceID', async (req, res) => {
+            if (mongoose.connection.readyState === 1) {
+                const Econt = mongoose.model('EconT', EconTSchema);
+                const ManIndus = mongoose.model('ManIndus', EconTManIndusSchema);
+                const DGC = mongoose.model('Dgc', DgcSchema);
 
-//     const deviceID = req.params.deviceID;
+                const EconData = await Econt.find({ DeviceName: deviceID });
+                const ManIndusData = await ManIndus.find({ DeviceName: deviceID });
+                const DgcData = await DGC.find({ DeviceName: deviceID });
 
-//     if (!deviceID) {
-//         res.status(400).send('Device ID is required!!');
-//     } else {
-//         try {
-//             await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+                if (EconData.length != 0) {
+                    console.log("current Device", EconData)
+                    const CurrentDeviceId = EconData[0]._id;
+                    let resetData;
+                    resetData = await Econt.findByIdAndUpdate(
+                        CurrentDeviceId,
+                        {
+                            _id: CurrentDeviceId,
+                            DeviceName: deviceID,
+                            Data: {}
+                        },
+                        { new: true, runValidators: true }
+                    );
+                    if (resetData) {
+                        res.json({ message: "Successfully Reset", response: resetData });
+                    } else {
+                        res.json({ message: "Unable to reset", response: resetData });
+                    }
 
-//             if (mongoose.connection.readyState === 1) {
-//                 const Econt = mongoose.model('EconT', EconTSchema);
-//                 const ManIndus = mongoose.model('ManIndus', EconTManIndusSchema);
-//                 const DGC = mongoose.model('Dgc', DgcSchema);
-
-//                 try {
-//                     const EconData = await Econt.find({ DeviceName: deviceID });
-//                     if (EconData.length != 0) {
-//                        console.log("current Device",EconData)
-//                        const CurrentDeviceId = EconData[0]._id;
-//                        const CurrentDeviceParameters = Object.keys(EconData[0].Data);
-
-//                        const resetData = await EconT.findByIdAndUpdate(
-//                         CurrentDeviceId,
-//                         {
-//                             firstName: firstname,
-//                             lastName: lastname,
-//                             email: email,
-//                             phone: phone,
-//                             city: city,
-//                             photo: photo
-//                         },
-//                         { new: true, runValidators: true } // Options to return the updated document
-//                     );
-//                     } else {
-//                         const ManIndusData = await ManIndus.find({ DeviceName: deviceID });
-//                         if (ManIndusData.length != 0) {
-//                             console.log("current Device",ManIndusData)
-//                         } else {
-//                             const DgcData = await DGC.find({ DeviceName: deviceID });
-//                             if (DgcData.length != 0) {
-//                                 console.log("current Device",DgcData)
-                           
-//                             } else {
-//                                 res.json({
-//                                     status: 200,
-//                                     message: "No Device Found!!"
-//                                 })
-//                             }
-//                         }
-//                     }
-
-                   
-
-
-//                 } catch (error) {
-//                     console.error("Error fetching data:", error);
-//                     res.status(500).json({ message: "An error occurred while fetching data." });
-//                 }
-//             }
-//             else {
-//                 res.status(400).json({ message: "Database not connected!!" })
-//             }
-
-
-//         } catch (error) {
-//             console.error('Error fetching Graph Data:', error);
-//             res.status(500).json({ message: 'Error fetching Graph Data' });
-//         }
-//     }
-
-
-
-
-// });
+                }
+                if (ManIndusData.length != 0) {
+                    console.log("current Device", ManIndusData)
+                    const CurrentDeviceId = ManIndusData[0]._id;
+                    let resetData;
+                    resetData = await ManIndus.findByIdAndUpdate(
+                        CurrentDeviceId,
+                        {
+                            _id: CurrentDeviceId,
+                            DeviceName: deviceID,
+                            Data: {}
+                        },
+                        { new: true, runValidators: true }
+                    );
+                    if (resetData) {
+                        res.json({ message: "Successfully Reset", response: resetData });
+                    } else {
+                        res.json({ message: "Unable to reset", response: resetData })
+                    }
 
 
 
 
 
 
+                }
+                if (DgcData.length != 0) {
+                    console.log("current Device", DgcData)
+
+                    const CurrentDeviceId = DgcData[0]._id;
+                    let resetData;
+                    resetData = await DGC.findByIdAndUpdate(
+                        CurrentDeviceId,
+                        {
+                            _id: CurrentDeviceId,
+                            DeviceName: deviceID,
+                            Data: {}
+                        },
+                        { new: true, runValidators: true }
+                    );
+                    if (resetData) {
+                        res.json({ message: "Successfully Reset", response: resetData });
+                    } else {
+                        res.json({ message: "Unable to reset", response: resetData })
+                    }
+                }
+            }
+            else {
+                res.status(400).json({ message: "Database not connected!!" })
+            }
+
+        } catch (error) {
+            console.error('Error fetching Graph Data:', error);
+            res.status(500).json({ message: 'Error fetching Graph Data' });
+        }
+    }
+});
 
 
 
