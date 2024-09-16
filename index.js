@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
 const mqttConnect = require('./utils/helper');
-const { EconTSchema, DgcSchema, EconTManIndusSchema } = require('./utils/model');
+const { EconTSchema, DgcSchema, EconTManIndusSchema, EconT } = require('./utils/model');
 
 const app = express();
 
@@ -12,13 +12,11 @@ app.use(cors());
 // app.use(express.json());
 
 // Daily task scheduled
-process.env.TZ = 'Asia/Kolkata';
+// process.env.TZ = 'Asia/Kolkata';
 
-cron.schedule('40 10 * * *', async () => {
-    await getAllDevice();
-});
-
-
+// cron.schedule('40 10 * * *', async () => {
+//     await getAllDevice();
+// });
 
 const getAllDevice = async () => {
     const getDeviceResp = await fetch("https://config.iot.mrmprocom.com/php-admin/getAllDevices.php")
@@ -27,6 +25,7 @@ const getAllDevice = async () => {
 
 }
 
+getAllDevice();
 
 const dailyTask = async (AllDevices) => {
     console.log('Running the daily task');
@@ -101,9 +100,10 @@ const dailyTask = async (AllDevices) => {
                         if (resp2.status == 200) {
                             fetchDataFromDevice = Object.values(resp2.data[0])[0];
 
-                            fetchDataFromDevice.map((item) => completedChunks.push(item));
+                            
 
                             if (fetchDataFromDevice.length == 200) {
+                                fetchDataFromDevice.map((item) => completedChunks.push(item));
                                 offset = offset + 200;
                                 await fetchAllChunks();
                             } else {
@@ -162,7 +162,7 @@ const dailyTask = async (AllDevices) => {
                             console.log("totalDatatoStore:", totalDatatoStore);
                             const result = await singleschema.findOneAndUpdate(
                                 { DeviceName: DeviceName },
-                                { $set: { [`Data.${parameter}`]: { totalData: totalDatatoStore, offset: Number(offset) } } },
+                                { $set: { [`Data.${parameter}`]: totalDatatoStore } },
                                 { new: true, upsert: true }
                             );
                             console.log("Updated in database :", result);
@@ -170,7 +170,7 @@ const dailyTask = async (AllDevices) => {
                             const newItem = new singleschema({
                                 DeviceName: DeviceName,
                                 Data: {
-                                    [parameter]: { totalData: completedChunks, offset: Number(offset) }
+                                    [parameter]: completedChunks
                                 }
                             });
                             const savedItem = await newItem.save();
@@ -343,6 +343,95 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
 
 
 });
+
+
+
+
+// app.get('/api/ResetGraph/:deviceID', async (req, res) => {
+
+//     const deviceID = req.params.deviceID;
+
+//     if (!deviceID) {
+//         res.status(400).send('Device ID is required!!');
+//     } else {
+//         try {
+//             await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+
+//             if (mongoose.connection.readyState === 1) {
+//                 const Econt = mongoose.model('EconT', EconTSchema);
+//                 const ManIndus = mongoose.model('ManIndus', EconTManIndusSchema);
+//                 const DGC = mongoose.model('Dgc', DgcSchema);
+
+//                 try {
+//                     const EconData = await Econt.find({ DeviceName: deviceID });
+//                     if (EconData.length != 0) {
+//                        console.log("current Device",EconData)
+//                        const CurrentDeviceId = EconData[0]._id;
+//                        const CurrentDeviceParameters = Object.keys(EconData[0].Data);
+
+//                        const resetData = await EconT.findByIdAndUpdate(
+//                         CurrentDeviceId,
+//                         {
+//                             firstName: firstname,
+//                             lastName: lastname,
+//                             email: email,
+//                             phone: phone,
+//                             city: city,
+//                             photo: photo
+//                         },
+//                         { new: true, runValidators: true } // Options to return the updated document
+//                     );
+//                     } else {
+//                         const ManIndusData = await ManIndus.find({ DeviceName: deviceID });
+//                         if (ManIndusData.length != 0) {
+//                             console.log("current Device",ManIndusData)
+//                         } else {
+//                             const DgcData = await DGC.find({ DeviceName: deviceID });
+//                             if (DgcData.length != 0) {
+//                                 console.log("current Device",DgcData)
+                           
+//                             } else {
+//                                 res.json({
+//                                     status: 200,
+//                                     message: "No Device Found!!"
+//                                 })
+//                             }
+//                         }
+//                     }
+
+                   
+
+
+//                 } catch (error) {
+//                     console.error("Error fetching data:", error);
+//                     res.status(500).json({ message: "An error occurred while fetching data." });
+//                 }
+//             }
+//             else {
+//                 res.status(400).json({ message: "Database not connected!!" })
+//             }
+
+
+//         } catch (error) {
+//             console.error('Error fetching Graph Data:', error);
+//             res.status(500).json({ message: 'Error fetching Graph Data' });
+//         }
+//     }
+
+
+
+
+// });
+
+
+
+
+
+
+
+
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
