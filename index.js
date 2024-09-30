@@ -122,7 +122,7 @@ const dailyTask = async (AllDevices) => {
 
                     await fetchAllChunks();
 
-                    await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+                    await mongoose.connect("mongodb+srv://mrm-admin:a7L546slF0xV982d@mrm-iot-mongodb-79699c7f.mongo.ondigitalocean.com/mrm_graphs?tls=true&authSource=admin&replicaSet=mrm-iot-mongodb");
                     if (mongoose.connection.readyState === 1) {
                         console.log('Database connection successfull');
                         console.log("Device Type:", DeviceType);
@@ -192,7 +192,7 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
     console.log("parameter", Parameter)
     console.log("DeviceName", DeviceName)
     console.log("DeviceType", DeviceType)
-    await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+    await mongoose.connect("mongodb+srv://mrm-admin:a7L546slF0xV982d@mrm-iot-mongodb-79699c7f.mongo.ondigitalocean.com/mrm_graphs?tls=true&authSource=admin&replicaSet=mrm-iot-mongodb");
     if (mongoose.connection.readyState === 1) {
 
         if (DeviceType == 'ECON-T-312E') { singleschema = mongoose.model('EconT', EconTSchema); }
@@ -211,8 +211,6 @@ const getOffset = async (DeviceName, Parameter, DeviceType) => {
         } else {
             return 0;
         }
-
-
     }
 
 }
@@ -224,7 +222,7 @@ app.get('/', async (req, res) => {
 
 app.get('/api/getAllGraphData', async (req, res) => {
     try {
-        await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+        await mongoose.connect("mongodb+srv://mrm-admin:a7L546slF0xV982d@mrm-iot-mongodb-79699c7f.mongo.ondigitalocean.com/mrm_graphs?tls=true&authSource=admin&replicaSet=mrm-iot-mongodb");
 
         if (mongoose.connection.readyState === 1) {
             const Econt = mongoose.model('EconT', EconTSchema); // Removed 'await' here
@@ -266,7 +264,7 @@ app.get('/api/getSingheGraphData/:deviceID', async (req, res) => {
         res.status(400).send('Device ID is required!!');
     } else {
         try {
-            await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+            await mongoose.connect("mongodb+srv://mrm-admin:a7L546slF0xV982d@mrm-iot-mongodb-79699c7f.mongo.ondigitalocean.com/mrm_graphs?tls=true&authSource=admin&replicaSet=mrm-iot-mongodb");
 
             if (mongoose.connection.readyState === 1) {
                 const Econt = mongoose.model('EconT', EconTSchema);
@@ -340,7 +338,7 @@ app.get('/api/ResetGraph/:deviceID', async (req, res) => {
         res.status(400).send('Device ID is required!!');
     } else {
         try {
-            await mongoose.connect("mongodb+srv://sudhanshu:hjPukpCKLzuSmw1Q@mrmgraphs.rnumk.mongodb.net/MRM_graph_data?retryWrites=true&w=majority&appName=MRMGraphs");
+            await mongoose.connect("mongodb+srv://mrm-admin:a7L546slF0xV982d@mrm-iot-mongodb-79699c7f.mongo.ondigitalocean.com/mrm_graphs?tls=true&authSource=admin&replicaSet=mrm-iot-mongodb");
 
             if (mongoose.connection.readyState === 1) {
                 const Econt = mongoose.model('EconT', EconTSchema);
@@ -365,11 +363,10 @@ app.get('/api/ResetGraph/:deviceID', async (req, res) => {
                         { new: true, runValidators: true }
                     );
                     if (resetData) {
-                        res.json({ message: "Successfully Reset", response: resetData });
+                        res.json({ message: "Reset Successfully!!", response: resetData,status:200 });
                     } else {
-                        res.json({ message: "Unable to reset", response: resetData });
+                        res.json({ message: "Unable to reset", response: resetData ,status:400});
                     }
-
                 }
                 if (ManIndusData.length != 0) {
                     console.log("current Device", ManIndusData)
@@ -385,20 +382,13 @@ app.get('/api/ResetGraph/:deviceID', async (req, res) => {
                         { new: true, runValidators: true }
                     );
                     if (resetData) {
-                        res.json({ message: "Successfully Reset", response: resetData });
+                        res.json({ message: "Reset Successfully!!", response: resetData,status:200 });
                     } else {
-                        res.json({ message: "Unable to reset", response: resetData })
+                        res.json({ message: "Unable to reset", response: resetData ,status:400});
                     }
-
-
-
-
-
-
                 }
                 if (DgcData.length != 0) {
                     console.log("current Device", DgcData)
-
                     const CurrentDeviceId = DgcData[0]._id;
                     let resetData;
                     resetData = await DGC.findByIdAndUpdate(
@@ -411,9 +401,9 @@ app.get('/api/ResetGraph/:deviceID', async (req, res) => {
                         { new: true, runValidators: true }
                     );
                     if (resetData) {
-                        res.json({ message: "Successfully Reset", response: resetData });
+                        res.json({ message: "Reset Successfully!!", response: resetData,status:200 });
                     } else {
-                        res.json({ message: "Unable to reset", response: resetData })
+                        res.json({ message: "Unable to reset", response: resetData ,status:400});
                     }
                 }
             }
@@ -439,7 +429,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(5000, () => {
-    console.log("Server is running on port 5000");
+app.listen(4000, () => {
+    console.log("Server is running on port 4000");
 });
 
